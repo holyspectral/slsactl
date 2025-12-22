@@ -56,6 +56,7 @@ var (
 		"rancher/neuvector-compliance-config":                 "neuvector/compliance-config",
 		"rancher/supportability-review-internal":              "rancher/supportability-review",
 		"rancher/supportability-review-app-frontend":          "rancher/supportability-review-operator",
+		"rancher-sandbox/runtime-enforcer/agent":              "rancher-sandbox/runtime-enforcer",
 	}
 
 	mutableRepo = map[string]bool{

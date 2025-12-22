@@ -35,7 +35,7 @@ func (v *Verifier) Verify(ctx context.Context, image string) error {
 	var certIdentity string
 	var err error
 
-	repo, ref, err := getImageRepoRef(image)
+	repo, _, ref, err := getImageRepoRef(image)
 	if err != nil {
 		return fmt.Errorf("failed to parse image name: %w", err)
 	}
@@ -66,9 +66,9 @@ func (v *Verifier) Verify(ctx context.Context, image string) error {
 	return v.UpstreamVerifier.Verify(ctx, vc, image)
 }
 
-func getImageRepoRef(imageName string) (string, string, error) {
+func getImageRepoRef(imageName string) (string, string, string, error) {
 	if len(imageName) < 5 {
-		return "", "", fmt.Errorf("invalid image name: %q", imageName)
+		return "", "", "", fmt.Errorf("invalid image name: %q", imageName)
 	}
 
 	if strings.Contains(imageName, "@") {
@@ -77,27 +77,27 @@ func getImageRepoRef(imageName string) (string, string, error) {
 
 	d := strings.Split(imageName, ":")
 	if len(d) < 2 || len(d[1]) == 0 {
-		return "", "", fmt.Errorf("missing image tag: %q", imageName)
+		return "", "", "", fmt.Errorf("missing image tag: %q", imageName)
 	}
 
 	ref, err := name.ParseReference(imageName, name.WeakValidation)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to parse image name: %w", err)
+		return "", "", "", fmt.Errorf("failed to parse image name: %w", err)
 	}
 	repo := ref.Context().RepositoryStr()
 
 	names := strings.Split(strings.TrimPrefix(repo, "library/"), "/")
 	if len(names) < 2 {
-		return "", "", fmt.Errorf("unsupported image name: %q", imageName)
+		return "", "", "", fmt.Errorf("unsupported image name: %q", imageName)
 	}
 
-	// For multi-leveled, assumes the last two components represents org/repo.
+	// For multi-leveled, assumes the last three components represents org/repo.
 	r := strings.Split(repo, "/")
-	if len(r) > 2 {
-		repo = strings.Join(r[len(r)-2:], "/")
+	if len(r) > 3 {
+		repo = strings.Join(r[len(r)-3:], "/")
 	}
 
-	return repo, ref.Identifier(), nil
+	return repo, "", ref.Identifier(), nil
 }
 
 func getMutableCertIdentity(ctx context.Context, imageName string) (string, error) {
@@ -105,7 +105,7 @@ func getMutableCertIdentity(ctx context.Context, imageName string) (string, erro
 	var realref any
 	var ok bool
 
-	repo, _, err := getImageRepoRef(imageName)
+	repo, _, _, err := getImageRepoRef(imageName)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse image name: %w", err)
 	}
@@ -131,7 +131,7 @@ func getMutableCertIdentity(ctx context.Context, imageName string) (string, erro
 }
 
 func getCertIdentity(imageName string) (string, error) {
-	repo, ref, err := getImageRepoRef(imageName)
+	repo, _, ref, err := getImageRepoRef(imageName)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse image name: %w", err)
 	}

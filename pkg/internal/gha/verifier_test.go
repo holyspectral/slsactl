@@ -289,3 +289,47 @@ func (m *upstreamMock) Verify(ctx context.Context, vc verify.VerifyCommand, imag
 
 	return args.Error(0)
 }
+
+func Test_getImageRepoRef(t *testing.T) {
+	tests := []struct {
+		imageName string
+		repo      string
+		image     string
+		ref       string
+		wantErr   bool
+	}{
+		{
+			imageName: "ghcr.io/kubewarden/sbomscanner/storage:v0.8.3",
+			repo:      "kubewarden/sbomscanner",
+			image:     "",
+			ref:       "v0.8.3",
+			wantErr:   false,
+		},
+		{
+			imageName: "ghcr.io/kubewarden/kubewarden-controller:v1.31.0",
+			repo:      "kubewarden/kubewarden-controller",
+			image:     "",
+			ref:       "v1.31.0",
+			wantErr:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.imageName, func(t *testing.T) {
+			repo, image, ref, err := getImageRepoRef(tt.imageName)
+			if err != nil {
+				if !tt.wantErr {
+					t.Errorf("getImageRepoRef() failed: %v", err)
+				}
+				return
+			}
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.repo, repo)
+				assert.Equal(t, tt.image, image)
+				assert.Equal(t, tt.ref, ref)
+			}
+		})
+	}
+}
